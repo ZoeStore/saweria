@@ -71,11 +71,15 @@ export default async function handler(req, res) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         username: "ZoeBot",
+        avatar_url: "https://cdn.discordapp.com/attachments/1408544904665108642/1478223368326217930/z.png?ex=69a79e4b&is=69a64ccb&hm=86bb0aa4b02539fab80ec0fd7949bfcff4a521d1fa2cf7507dad1921fb58101f&",
         embeds: [
           {
             title: "🎉 New Donation Received!",
             description: `Thank you **${donorName}** for your incredible support!`,
             color: 0x5865F2,
+            thumbnail: {
+              url: "https://cdn.discordapp.com/attachments/1408544904665108642/1478223368326217930/z.png?ex=69a79e4b&is=69a64ccb&hm=86bb0aa4b02539fab80ec0fd7949bfcff4a521d1fa2cf7507dad1921fb58101f&"
+            },
             fields: [
               { name: "👤 Donor", value: donorName, inline: true },
               { name: "💰 Amount", value: `Rp ${formatCurrency(amount)}`, inline: true },
@@ -94,3 +98,4 @@ export default async function handler(req, res) {
   return res.status(405).json({ error: "Method Not Allowed" });
 
 }
+
