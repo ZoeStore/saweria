@@ -74,6 +74,7 @@ export default async function handler(req, res) {
         embeds: [
           {
             title: "🎉 New Donation Received!",
+            description: `Thank you **${donorName}** for your incredible support!`,
             color: 0x5865F2,
             fields: [
               { name: "👤 Donor", value: donorName, inline: true },
@@ -91,4 +92,5 @@ export default async function handler(req, res) {
   }
 
   return res.status(405).json({ error: "Method Not Allowed" });
+
 }
