@@ -1,46 +1,48 @@
-let database = [];
+import fs from "fs";
+import path from "path";
+
+const dbFolder = path.join(process.cwd(), "database");
+const dbFile = path.join(dbFolder, "donations.json");
+
+function initDB() {
+  if (!fs.existsSync(dbFolder)) {
+    fs.mkdirSync(dbFolder);
+  }
+
+  if (!fs.existsSync(dbFile)) {
+    fs.writeFileSync(dbFile, JSON.stringify([]));
+  }
+}
+
+function loadDB() {
+  initDB();
+  return JSON.parse(fs.readFileSync(dbFile));
+}
+
+function saveDB(data) {
+  fs.writeFileSync(dbFile, JSON.stringify(data, null, 2));
+}
 
 export default async function handler(req, res) {
 
-  // ===== LEADERBOARD ENDPOINT =====
   if (req.method === "GET") {
-
-    if (req.url.includes("/leaderboard")) {
-      const leaderboard = {};
-
-      database.forEach((d) => {
-        if (!leaderboard[d.donor]) {
-          leaderboard[d.donor] = 0;
-        }
-        leaderboard[d.donor] += d.amount;
-      });
-
-      const sorted = Object.entries(leaderboard)
-        .sort((a, b) => b[1] - a[1])
-        .map(([donor, total]) => ({ donor, total }));
-
-      return res.status(200).json(sorted);
-    }
-
-    if (req.url.includes("/total")) {
-      const total = database.reduce((sum, d) => sum + d.amount, 0);
-      return res.status(200).json({ total });
-    }
-
-    return res.status(200).json({ message: "Webhook Ready ✅" });
+    return res.status(200).json({ message: "Zoe AI Donation System Ready 🚀" });
   }
 
-  // ===== POST WEBHOOK SAWERIA =====
   if (req.method === "POST") {
 
-    const raw = req.body;
-    const payload = raw?.data || raw;
+    const payload = req.body?.data || req.body;
 
     const donorName =
       payload?.donator ||
       payload?.donator_name ||
       payload?.name ||
       "Anonymous";
+
+    const email =
+      payload?.email ||
+      payload?.donator_email ||
+      "unknown@email.com";
 
     const amount = Number(
       payload?.amount_raw ||
@@ -50,52 +52,142 @@ export default async function handler(req, res) {
 
     const message =
       payload?.message ||
-      "No message provided.";
+      "Tidak ada pesan";
 
     const formatCurrency = (num) =>
       new Intl.NumberFormat("id-ID").format(num);
 
-    // Simpan ke memory
-    database.push({
-      donor: donorName,
-      amount,
-      message,
-      date: new Date().toISOString()
-    });
+    let database = loadDB();
 
-    const totalDonation = database.reduce((sum, d) => sum + d.amount, 0);
+    let user = database.find(d => d.email === email);
 
-    // Kirim ke Discord
+    if (user) {
+
+      user.total += amount;
+      user.donation_count += 1;
+
+      user.messages = user.messages
+        ? user.messages + ", " + message
+        : message;
+
+      user.last_donation = new Date().toISOString();
+
+      user.name = donorName;
+
+    } else {
+
+      database.push({
+        email: email,
+        name: donorName,
+        total: amount,
+        messages: message,
+        donation_count: 1,
+        last_donation: new Date().toISOString()
+      });
+
+    }
+
+    saveDB(database);
+
+    const totalDonation = database.reduce((sum, d) => sum + d.total, 0);
+    const topDonor = [...database]
+      .sort((a, b) => b.total - a.total)[0];
+    const gifs = [
+      "https://cdn.discordapp.com/attachments/1408544904665108642/1480132989957570674/Rainbow_Line_GIF_by_Javi_Fernandez.gif?ex=69ae90c4&is=69ad3f44&hm=16bbdceeb1d183f929a6bbda574eeeb0f4af0445d32d3a7ef781ec0a99a5e00d&",
+      "https://cdn.discordapp.com/attachments/1408544904665108642/1480132989957570674/Rainbow_Line_GIF_by_Javi_Fernandez.gif?ex=69ae90c4&is=69ad3f44&hm=16bbdceeb1d183f929a6bbda574eeeb0f4af0445d32d3a7ef781ec0a99a5e00d&"
+    ];
+
+    const randomGif = gifs[Math.floor(Math.random() * gifs.length)];
+    const embed = {
+
+      title: "💎✨ DONATION ALERT ✨💎",
+
+      description:
+        "🎉 **Terima kasih atas donasinya!**\n" +
+        "🔥 Dukungan kamu sangat berarti untuk stream ini!",
+
+      color: 0x00ffe5,
+
+      thumbnail: {
+        url: "https://cdn.discordapp.com/attachments/1408544904665108642/1478223368326217930/z.png?ex=69ae35cb&is=69ace44b&hm=9af28c354bb8855892f6cc45db4ca79be6ae55845bb2e58fa7525877d66a3c6b&"
+      },
+
+      image: {
+        url: randomGif
+      },
+
+      fields: [
+
+        {
+          name: "👤 Donator",
+          value: `✨ **${donorName}**`,
+          inline: true
+        },
+
+        {
+          name: "💰 Donation",
+          value: `💸 **Rp ${formatCurrency(amount)}**`,
+          inline: true
+        },
+
+        {
+          name: "💬 Message",
+          value: `🗨️ ${message}`
+        },
+
+        {
+          name: "📊 Total Donasi Server",
+          value: `💎 Rp ${formatCurrency(totalDonation)}`
+        },
+
+        {
+          name: "🏆 Top Donator",
+          value: `🥇 **${topDonor.name}** — Rp ${formatCurrency(topDonor.total)}`
+        },
+
+        {
+          name: "📈 Jumlah Donasi User",
+          value: `${user ? user.donation_count : 1} kali`
+        }
+
+      ],
+
+      footer: {
+        text: "🤖 Zoe AI Donation System • Powered by Vercel"
+      },
+
+      timestamp: new Date().toISOString()
+
+    };
+
+    // ======================
+    // SEND TO DISCORD
+    // ======================
+
     await fetch(process.env.DISCORD_WEBHOOK, {
+
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+
+      headers: {
+        "Content-Type": "application/json"
+      },
+
       body: JSON.stringify({
-        username: "ZoeBot",
-        avatar_url: "https://cdn.discordapp.com/attachments/1408544904665108642/1478223368326217930/z.png?ex=69a79e4b&is=69a64ccb&hm=86bb0aa4b02539fab80ec0fd7949bfcff4a521d1fa2cf7507dad1921fb58101f&",
-        embeds: [
-          {
-            title: "🎉 New Donation Received!",
-            description: `Thank you **${donorName}** for your incredible support!`,
-            color: 0x5865F2,
-            thumbnail: {
-              url: "https://cdn.discordapp.com/attachments/1408544904665108642/1478223368326217930/z.png?ex=69a79e4b&is=69a64ccb&hm=86bb0aa4b02539fab80ec0fd7949bfcff4a521d1fa2cf7507dad1921fb58101f&"
-            },
-            fields: [
-              { name: "👤 Donor", value: donorName, inline: true },
-              { name: "💰 Amount", value: `Rp ${formatCurrency(amount)}`, inline: true },
-              { name: "💬 Message", value: message },
-              { name: "📊 Total Donation", value: `Rp ${formatCurrency(totalDonation)}` }
-            ],
-            timestamp: new Date().toISOString()
-          }
-        ]
+
+        username: "🤖 Zoe AI Donation Bot",
+
+        avatar_url:
+          "https://cdn-icons-png.flaticon.com/512/4712/4712109.png",
+
+        embeds: [embed]
+
       })
+
     });
 
     return res.status(200).json({ success: true });
+
   }
 
   return res.status(405).json({ error: "Method Not Allowed" });
-
 }
-
