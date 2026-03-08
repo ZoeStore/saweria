@@ -16,7 +16,7 @@ function initDB() {
 
 function loadDB() {
   initDB();
-  return JSON.parse(fs.readFileSync(dbFile));
+  return JSON.parse(fs.readFileSync(dbFile, "utf8"));
 }
 
 function saveDB(data) {
@@ -26,10 +26,16 @@ function saveDB(data) {
 export default async function handler(req, res) {
 
   if (req.method === "GET") {
-    return res.status(200).json({ message: "Zoe AI Donation System Ready 🚀" });
+    return res.status(200).json({
+      status: "Zoe AI Donation System Ready 🚀"
+    });
   }
 
-  if (req.method === "POST") {
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
+
+  try {
 
     const payload = req.body?.data || req.body;
 
@@ -54,6 +60,12 @@ export default async function handler(req, res) {
       payload?.message ||
       "Tidak ada pesan";
 
+    const media =
+      payload?.media ||
+      payload?.video ||
+      payload?.voice ||
+      null;
+
     const formatCurrency = (num) =>
       new Intl.NumberFormat("id-ID").format(num);
 
@@ -76,40 +88,56 @@ export default async function handler(req, res) {
 
     } else {
 
-      database.push({
-        email: email,
+      user = {
+        email,
         name: donorName,
         total: amount,
         messages: message,
         donation_count: 1,
         last_donation: new Date().toISOString()
-      });
+      };
 
+      database.push(user);
     }
 
     saveDB(database);
 
-    const totalDonation = database.reduce((sum, d) => sum + d.total, 0);
-    const topDonor = [...database]
-      .sort((a, b) => b.total - a.total)[0];
+    const totalDonation =
+      database.reduce((sum, d) => sum + d.total, 0);
+
+    const topDonor =
+      [...database].sort((a, b) => b.total - a.total)[0];
+
+    const leaderboard =
+      [...database]
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 5)
+      .map((d, i) =>
+        `**${i+1}. ${d.name}** — Rp ${formatCurrency(d.total)}`
+      )
+      .join("\n");
+
     const gifs = [
-      "https://cdn.discordapp.com/attachments/1408544904665108642/1480132989957570674/Rainbow_Line_GIF_by_Javi_Fernandez.gif?ex=69ae90c4&is=69ad3f44&hm=16bbdceeb1d183f929a6bbda574eeeb0f4af0445d32d3a7ef781ec0a99a5e00d&",
-      "https://cdn.discordapp.com/attachments/1408544904665108642/1480132989957570674/Rainbow_Line_GIF_by_Javi_Fernandez.gif?ex=69ae90c4&is=69ad3f44&hm=16bbdceeb1d183f929a6bbda574eeeb0f4af0445d32d3a7ef781ec0a99a5e00d&"
+      "https://media.giphy.com/media/3o7aD2saalBwwftBIY/giphy.gif",
+      "https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif",
+      "https://media.giphy.com/media/26ufdipQqU2lhNA4g/giphy.gif"
     ];
 
-    const randomGif = gifs[Math.floor(Math.random() * gifs.length)];
+    const randomGif =
+      gifs[Math.floor(Math.random() * gifs.length)];
+
     const embed = {
 
       title: "💎✨ DONATION ALERT ✨💎",
 
       description:
-        "🎉 **Terima kasih atas donasinya!**\n" +
-        "🔥 Dukungan kamu sangat berarti untuk stream ini!",
+        "🎉 **Terima kasih atas donasi!**\n" +
+        "🔥 Dukungan kamu sangat berarti!",
 
       color: 0x00ffe5,
 
       thumbnail: {
-        url: "https://cdn.discordapp.com/attachments/1408544904665108642/1478223368326217930/z.png?ex=69ae35cb&is=69ace44b&hm=9af28c354bb8855892f6cc45db4ca79be6ae55845bb2e58fa7525877d66a3c6b&"
+        url: "https://cdn-icons-png.flaticon.com/512/4712/4712109.png"
       },
 
       image: {
@@ -125,7 +153,7 @@ export default async function handler(req, res) {
         },
 
         {
-          name: "💰 Donation",
+          name: "💰 Amount",
           value: `💸 **Rp ${formatCurrency(amount)}**`,
           inline: true
         },
@@ -136,33 +164,38 @@ export default async function handler(req, res) {
         },
 
         {
-          name: "📊 Total Donasi Server",
+          name: "📊 Total Server Donation",
           value: `💎 Rp ${formatCurrency(totalDonation)}`
         },
 
         {
           name: "🏆 Top Donator",
-          value: `🥇 **${topDonor.name}** — Rp ${formatCurrency(topDonor.total)}`
+          value: `🥇 ${topDonor.name} — Rp ${formatCurrency(topDonor.total)}`
         },
 
         {
-          name: "📈 Jumlah Donasi User",
-          value: `${user ? user.donation_count : 1} kali`
+          name: "📈 User Donation Count",
+          value: `${user.donation_count} kali`
+        },
+
+        {
+          name: "🔥 Top 5 Leaderboard",
+          value: leaderboard
         }
 
       ],
 
       footer: {
-        text: "🤖 Zoe AI Donation System • Powered by Vercel"
+        text: "🤖 Zoe AI Donation System"
       },
 
       timestamp: new Date().toISOString()
 
     };
 
-    // ======================
-    // SEND TO DISCORD
-    // ======================
+    const content = media
+      ? `🎬 **Media Donation Detected!**\n${media}`
+      : null;
 
     await fetch(process.env.DISCORD_WEBHOOK, {
 
@@ -179,15 +212,25 @@ export default async function handler(req, res) {
         avatar_url:
           "https://cdn-icons-png.flaticon.com/512/4712/4712109.png",
 
+        content,
+
         embeds: [embed]
 
       })
 
     });
 
-    return res.status(200).json({ success: true });
+    return res.status(200).json({
+      success: true
+    });
+
+  } catch (err) {
+
+    console.error(err);
+
+    return res.status(500).json({
+      error: "Internal Server Error"
+    });
 
   }
-
-  return res.status(405).json({ error: "Method Not Allowed" });
 }
