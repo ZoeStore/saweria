@@ -50,7 +50,7 @@ export default async function handler(req, res) {
 
     const embed = {
 
-      title: "💎✨ DONATION ALERT ✨💎",
+      title: "📢 DONATION ALERT",
 
       description:
         "🎉 **Thank you for your donation!**\n" +
@@ -137,4 +137,5 @@ export default async function handler(req, res) {
   }
 
 }
+
 
