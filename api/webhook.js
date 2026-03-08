@@ -27,7 +27,7 @@ export default async function handler(req, res) {
 
   if (req.method === "GET") {
     return res.status(200).json({
-      status: "Zoe AI Donation System Ready 🚀"
+      status: "Zoe Donation System Ready 🚀"
     });
   }
 
@@ -234,3 +234,4 @@ export default async function handler(req, res) {
 
   }
 }
+
