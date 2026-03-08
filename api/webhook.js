@@ -2,7 +2,7 @@ export default async function handler(req, res) {
 
   if (req.method === "GET") {
     return res.status(200).json({
-      message: "Zoe AI Donation System Ready 🚀"
+      message: "Zoe Donation System Ready 🚀"
     });
   }
 
@@ -30,7 +30,7 @@ export default async function handler(req, res) {
 
     const message =
       payload?.message ||
-      "Tidak ada pesan";
+      "No message";
 
     const media =
       payload?.media ||
@@ -42,9 +42,7 @@ export default async function handler(req, res) {
       new Intl.NumberFormat("id-ID").format(num);
 
     const gifs = [
-      "https://media.giphy.com/media/3o7aD2saalBwwftBIY/giphy.gif",
-      "https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif",
-      "https://media.giphy.com/media/26ufdipQqU2lhNA4g/giphy.gif"
+      "https://cdn.discordapp.com/attachments/1408544904665108642/1480133549402099825/Zoe.mp4?ex=69ae9149&is=69ad3fc9&hm=53444f67541c08afbfbbe08c275961769fa2528b825a66853166f49399fa676b&"
     ];
 
     const randomGif =
@@ -55,13 +53,13 @@ export default async function handler(req, res) {
       title: "💎✨ DONATION ALERT ✨💎",
 
       description:
-        "🎉 **Terima kasih atas donasinya!**\n" +
-        "🔥 Dukungan kamu sangat berarti!",
+        "🎉 **Thank you for your donation!**\n" +
+        "🔥 Your support means a lot!",
 
       color: 0x00ffe5,
 
       thumbnail: {
-        url: "https://cdn-icons-png.flaticon.com/512/4712/4712109.png"
+        url: "https://cdn.discordapp.com/attachments/1408544904665108642/1478223368326217930/z.png?ex=69ae35cb&is=69ace44b&hm=9af28c354bb8855892f6cc45db4ca79be6ae55845bb2e58fa7525877d66a3c6b&"
       },
 
       image: {
@@ -90,7 +88,7 @@ export default async function handler(req, res) {
       ],
 
       footer: {
-        text: "🤖 Zoe AI Donation Bot"
+        text: "🤖 Zoe Donation Bot - Saweria.co/Zoeli"
       },
 
       timestamp: new Date().toISOString()
@@ -111,10 +109,10 @@ export default async function handler(req, res) {
 
       body: JSON.stringify({
 
-        username: "🤖 Zoe AI Donation Bot",
+        username: "Zoe Donation Bot",
 
         avatar_url:
-          "https://cdn-icons-png.flaticon.com/512/4712/4712109.png",
+          "https://cdn.discordapp.com/attachments/1408544904665108642/1478223368326217930/z.png?ex=69ae35cb&is=69ace44b&hm=9af28c354bb8855892f6cc45db4ca79be6ae55845bb2e58fa7525877d66a3c6b&",
 
         content,
 
