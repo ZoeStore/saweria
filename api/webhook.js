@@ -42,7 +42,7 @@ export default async function handler(req, res) {
       new Intl.NumberFormat("id-ID").format(num);
 
     const gifs = [
-      "https://cdn.discordapp.com/attachments/1408544904665108642/1480133549402099825/Zoe.mp4?ex=69ae9149&is=69ad3fc9&hm=53444f67541c08afbfbbe08c275961769fa2528b825a66853166f49399fa676b&"
+      "https://cdn.discordapp.com/attachments/1408544904665108642/1480141780057063579/mioffice_animation_mioffice.gif?ex=69ae98f4&is=69ad4774&hm=9c86e2923c64e7f0ce1e2373ff22beb2c94303772b0945449788a82d4d7fc01a&"
     ];
 
     const randomGif =
@@ -137,3 +137,4 @@ export default async function handler(req, res) {
   }
 
 }
+
