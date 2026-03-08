@@ -1,38 +1,15 @@
-import fs from "fs";
-import path from "path";
-
-const dbFolder = path.join(process.cwd(), "database");
-const dbFile = path.join(dbFolder, "donations.json");
-
-function initDB() {
-  if (!fs.existsSync(dbFolder)) {
-    fs.mkdirSync(dbFolder);
-  }
-
-  if (!fs.existsSync(dbFile)) {
-    fs.writeFileSync(dbFile, JSON.stringify([]));
-  }
-}
-
-function loadDB() {
-  initDB();
-  return JSON.parse(fs.readFileSync(dbFile, "utf8"));
-}
-
-function saveDB(data) {
-  fs.writeFileSync(dbFile, JSON.stringify(data, null, 2));
-}
-
 export default async function handler(req, res) {
 
   if (req.method === "GET") {
     return res.status(200).json({
-      status: "Zoe Donation System Ready 🚀"
+      message: "Zoe AI Donation System Ready 🚀"
     });
   }
 
   if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+    return res.status(405).json({
+      error: "Method Not Allowed"
+    });
   }
 
   try {
@@ -44,11 +21,6 @@ export default async function handler(req, res) {
       payload?.donator_name ||
       payload?.name ||
       "Anonymous";
-
-    const email =
-      payload?.email ||
-      payload?.donator_email ||
-      "unknown@email.com";
 
     const amount = Number(
       payload?.amount_raw ||
@@ -69,54 +41,6 @@ export default async function handler(req, res) {
     const formatCurrency = (num) =>
       new Intl.NumberFormat("id-ID").format(num);
 
-    let database = loadDB();
-
-    let user = database.find(d => d.email === email);
-
-    if (user) {
-
-      user.total += amount;
-      user.donation_count += 1;
-
-      user.messages = user.messages
-        ? user.messages + ", " + message
-        : message;
-
-      user.last_donation = new Date().toISOString();
-
-      user.name = donorName;
-
-    } else {
-
-      user = {
-        email,
-        name: donorName,
-        total: amount,
-        messages: message,
-        donation_count: 1,
-        last_donation: new Date().toISOString()
-      };
-
-      database.push(user);
-    }
-
-    saveDB(database);
-
-    const totalDonation =
-      database.reduce((sum, d) => sum + d.total, 0);
-
-    const topDonor =
-      [...database].sort((a, b) => b.total - a.total)[0];
-
-    const leaderboard =
-      [...database]
-      .sort((a, b) => b.total - a.total)
-      .slice(0, 5)
-      .map((d, i) =>
-        `**${i+1}. ${d.name}** — Rp ${formatCurrency(d.total)}`
-      )
-      .join("\n");
-
     const gifs = [
       "https://media.giphy.com/media/3o7aD2saalBwwftBIY/giphy.gif",
       "https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif",
@@ -131,7 +55,7 @@ export default async function handler(req, res) {
       title: "💎✨ DONATION ALERT ✨💎",
 
       description:
-        "🎉 **Terima kasih atas donasi!**\n" +
+        "🎉 **Terima kasih atas donasinya!**\n" +
         "🔥 Dukungan kamu sangat berarti!",
 
       color: 0x00ffe5,
@@ -153,7 +77,7 @@ export default async function handler(req, res) {
         },
 
         {
-          name: "💰 Amount",
+          name: "💰 Donation",
           value: `💸 **Rp ${formatCurrency(amount)}**`,
           inline: true
         },
@@ -161,32 +85,12 @@ export default async function handler(req, res) {
         {
           name: "💬 Message",
           value: `🗨️ ${message}`
-        },
-
-        {
-          name: "📊 Total Server Donation",
-          value: `💎 Rp ${formatCurrency(totalDonation)}`
-        },
-
-        {
-          name: "🏆 Top Donator",
-          value: `🥇 ${topDonor.name} — Rp ${formatCurrency(topDonor.total)}`
-        },
-
-        {
-          name: "📈 User Donation Count",
-          value: `${user.donation_count} kali`
-        },
-
-        {
-          name: "🔥 Top 5 Leaderboard",
-          value: leaderboard
         }
 
       ],
 
       footer: {
-        text: "🤖 Zoe AI Donation System"
+        text: "🤖 Zoe AI Donation Bot"
       },
 
       timestamp: new Date().toISOString()
@@ -224,14 +128,14 @@ export default async function handler(req, res) {
       success: true
     });
 
-  } catch (err) {
+  } catch (error) {
 
-    console.error(err);
+    console.error(error);
 
     return res.status(500).json({
-      error: "Internal Server Error"
+      error: "Server Error"
     });
 
   }
-}
 
+}
