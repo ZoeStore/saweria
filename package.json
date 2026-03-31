@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 {
   "name": "zoe-donation-system",
   "version": "1.0.0",
@@ -13,3 +14,10 @@
     "mongoose": "^6.13.9"
   }
 }
+=======
+{
+  "name": "saweria-webhook",
+  "version": "1.0.0",
+  "type": "module"
+}
+>>>>>>> 578ca9abc4fe38a87691bf2544433cb86354d332
